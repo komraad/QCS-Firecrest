@@ -1,0 +1,10 @@
+#
+#  Copyright (c) 2019-2023, ETH Zurich. All rights reserved.
+#
+#  Please, refer to the LICENSE file in the root directory.
+#  SPDX-License-Identifier: BSD-3-Clause
+#
+pytest==6.2.1
+pytest-dotenv==0.5.2
+PyJWT==2.4.0
+requests==2.22.0

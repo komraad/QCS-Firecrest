@@ -1,0 +1,107 @@
+##
+##  Copyright (c) 2019-2023, ETH Zurich. All rights reserved.
+##
+##  Please, refer to the LICENSE file in the root directory.
+##  SPDX-License-Identifier: BSD-3-Clause
+##
+_format_version: "1.1"
+
+plugins:
+- name: jwt
+  # global plugin: applies to all request
+  config:
+    #_comment: "MUST add exp (expiration), not enabled by default"
+    claims_to_verify: [exp]
+- name: request-termination
+  route: reject
+  config:
+    status_code: 400
+    message: "Invalid"
+- name: zipkin
+  config:
+    http_endpoint: http://192.168.220.50:9411/api/v2/spans
+    sample_ratio: 1
+    include_credential: true
+    traceid_byte_count: 16
+    header_type: preserve
+    default_header_type: jaeger
+#    tags_header: Zipkin-Tags
+- name: cors
+  config:
+    origins:
+    - "*"
+    methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    headers:
+    - Accept
+    - X-Machine-Name
+    - X-Task-Id
+    - Authorization
+    - Content-Type
+    credentials: false
+    max_age: 3600
+
+consumers:
+- username: firecrest
+  custom_id: firecrest
+
+jwt_secrets:
+- consumer: firecrest
+  key: http://192.168.6.63:8080/auth/realms/kcrealm
+  algorithm: "RS256"
+  rsa_public_key: "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtCWuf4mjiDdbBkdBFHBSgnKX/ista8uGq5t97Wq6q4zBEklx6gXxMRl4AOB0qvri+eUYJ21J47T2AQzeY3fg2j62IRcbwQP2haD+aW0UaD994gGNO5fU0RcqjQqHQcKOC2iEjViYYPmBfL7ZicEilhLK1e8GtvxLNcnClnFBPpBUpt2x7YDcrfr7o/Xq/pTYF6ImCIjfiEBkzjbigDRaV5gAT7JJ+uHj8bPl2OJGyWFakO4ZitHo8x9HBZ11TuzUe2IeCCrLU4KZN2MBbzAgk+Dpqpz2gKUh4qIfhhlBx0LdcpPfQaxae6MwbKFdZ9Z0AMu1Etm2loM+K9hfuGudNwIDAQAB\n-----END PUBLIC KEY-----"
+
+routes:
+- name: reject
+  # rejects any undefined route with 'request-termination' plugin
+  paths:
+  - /
+  - /tasks/tasklist
+
+services:
+- name: compute
+  url: https://192.168.220.9:5006
+  routes:
+  - name: compute
+    methods: [DELETE,GET,POST]
+    paths:
+    - /compute/
+- name: status
+  url: https://192.168.220.4:5001
+  routes:
+  - name: status
+    methods: [GET]
+    paths:
+    - /status/
+- name: storage
+  url: https://192.168.220.5:5002
+  routes:
+  - name: storage
+    methods: [GET,POST]
+    paths:
+    - /storage/
+- name: tasks
+  url: https://192.168.220.6:5003
+  routes:
+  - name: tasks
+    methods: [GET]
+    paths:
+    - /tasks
+- name: utilities
+  url: https://192.168.220.7:5004
+  routes:
+  - name: utilities
+    methods: [DELETE,GET,POST,PUT]
+    paths:
+    - /utilities/
+- name: reservations
+  url: https://192.168.220.8:5005
+  routes:
+  - name: reservations
+    methods: [DELETE,GET,POST,PUT]
+    paths:
+    - /reservations
+
