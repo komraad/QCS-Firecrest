@@ -1,0 +1,127 @@
+<!--
+--  Copyright (c) 2019-2021, ETH Zurich. All rights reserved.
+--
+--  Please, refer to the LICENSE file in the root directory.
+--  SPDX-License-Identifier: BSD-3-Clause
+-->
+{% extends "demo_base.html" %}
+{% block title %}Create an Internal Transfer Job{% endblock %}
+{% block content %}
+<style>
+table {
+  border-collapse: collapse;
+  table-layout: fixed;
+    width: 70%;
+}
+td, th {
+  padding: 8px;
+}
+</style>
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+<script type="text/javascript">
+
+var stop_array = ["200","400"];
+
+function is_object(obj){
+
+  /*return obj == Object(obj);*/
+  /* if the length is undefined, is because it is a dictionary*/
+  return ( typeof obj.length === "undefined");
+}
+
+function update_progress(task_url) {
+
+      $.ajax({
+        type: 'GET',
+        url: task_url,
+        success: function(data){
+            $(".task").addClass("bg-success");
+
+            var task = document.getElementById("task");
+
+            var task_result = document.createElement("p");
+            var task_link   = document.createElement("a");
+
+            task_result.innerHTML = data["task"]["data"]["result"];
+            task_link.href = "{{ request.url_root }}compute/jobs/"+data["task"]["data"]["jobid"]+"?machine={{ machine }}";
+            task_link.innerHTML = "Job ID: "+data["task"]["data"]["jobid"];
+            task.appendChild(task_result);
+            task.appendChild(task_link);
+
+            if(stop_array.indexOf(data["task"]["status"]) != -1)
+                clearInterval(checkProgress);
+       },
+
+        error: function(data){
+          $(".task").addClass("bg-danger");
+          $( ".task" ).text("Error on submiting request\n"+data['error']);
+
+          },
+      });
+}
+
+</script>
+
+    <h1>Internal Data Mover</h1>
+
+    <form action="internal" method="post" class="form-group">
+    <table class="table table-hover" width="400px">
+        <tr><td width="100px"><b>Choose action</b></td><td width="300px">{{ form.action(class="form-control") }}</td></tr>
+        <tr><td><b>Target Path: </b></td><td>{{ form.targetPath(class="form-control") }}</td></tr>
+        <tr><td><b>Source Path: </b></td><td>{{ form.sourcePath(class="form-control") }}</td></tr>
+        <tr><td><b>Job Name (optional):</b></td><td>{{ form.jobName(class="form-control") }}</td></tr>
+        <tr><td>{{ form.submit(class="form-control") }}</td><td></td></tr>
+    </table>
+    </form>
+
+<br>
+<br>
+
+{% if response != None %}
+    {% if response.ok %}
+      <div class="bg-info">
+        You can check the details of this task <a href="{{ request.url_root }}tasks/{{ response.json()['task_id'] }}">here</a>
+      </div>
+      <br>
+
+      <script>
+        var checkProgress = setInterval(function() {
+          update_progress("/tasks/{{ response.json()['task_id'] }}?data=1");
+        }, 2000);
+      </script>
+      <div class="task" id="task">
+      </div>
+
+    {% else %}
+      <div class="bg-danger">
+        {{ response.json()['error'] }}
+       </div>
+    {% endif %}
+{% endif %}
+
+<script>
+
+	$("select").on("change",function(e){
+                var valueSelected  = this.value;
+		console.log("Value: "+valueSelected);
+
+		if (valueSelected == "rm"){
+			/*$("#sourcePath").val("Not required");*/
+			/*$("#sourcePath").attr("disabled", "disabled");*/
+            document.getElementById("sourcePath").disabled=true;
+		}
+		else{
+		    document.getElementById("sourcePath").disabled=false;
+			/*$("#sourcePath").val("");*/
+			/*$("#sourcePath").removeAttr("disabled");*/
+			
+		}
+	});
+
+</script>
+
+{% endblock %}
+
+

@@ -1,0 +1,126 @@
+<!--
+--  Copyright (c) 2019-2021, ETH Zurich. All rights reserved.
+--
+--  Please, refer to the LICENSE file in the root directory.
+--  SPDX-License-Identifier: BSD-3-Clause
+-->
+{% extends "demo_base.html" %}
+{% block title %}External File Download{% endblock %}
+{% block content %}
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+<script type="text/javascript">
+
+
+function update_progress(task_url) {
+
+	$.ajax({
+        type: 'GET',
+        url: task_url,
+        success: function(data){
+
+          status_code = data['task']['status'];
+
+          if (status_code == "400" || status_code == "118" ){
+            $("#tempurl-error").css("display","block");
+            $("#tempurl-error").text(data['task']['description']);
+            clearInterval(checkProgress);
+          }
+
+          else if (status_code == "116" ){
+            $("#tempurl-progress").css("display","block");
+            $("#tempurl-progress").text(data['task']['description'])
+          }
+
+          else if (status_code == "117" ){
+            $("#tempurl-progress").css("display","none");
+            $("#tempurl-success").css("display","block");
+
+            $("#tempurl-success-text").text(data['task']['description']);
+
+            $("#download-link").attr("href",data['task']['data']);
+	        clearInterval(checkProgress);
+          }
+      },
+
+      error: function(data){
+        $("#tempurl-progress").css("display","none");
+        $("#tempurl-error").css("display","block");
+        $("#tempurl-error").text(data['task']['description'])
+        clearInterval(checkProgress);
+        },
+      });
+
+  }
+
+
+</script>
+
+
+  <h1>Large data transfer from CSCS</h1>
+
+  {% if response != None %}
+    {% if response.status_code == 200 %}
+      {{ response.json()['success'] }} <br>
+      This is the URL where the async task can be query: {{ response.json()['task_url'] }}
+      <script>
+        setInterval(function() {
+          checkProgress = update_progress("/tasks/{{ response.json()['task_id'] }}");
+        }, 1000);
+      </script>
+      <div class="task">
+
+        <div id="tempurl">
+
+
+
+          <div style="display: none; border-color: blue; border-style: solid;" id="tempurl-progress">
+            <h3>In progress</h3>
+          </div>
+
+          <div class="bg-danger" id="tempurl-error"></div>
+
+          <div class="bg-success" id="tempurl-success">
+            URL to download file:
+            <div id="tempurl-success-text"></div>
+            <br>
+
+            <a target="_blank" id="download-link">Or use this link</a>
+
+          </div>
+
+        </div>
+
+
+
+      </div>
+    {% else %}
+
+    
+      {% set error_headers = ["X-Machine-Does-Not-Exist","X-Machine-Not-Available","X-Permission-Denied","X-Invalid-Path","X-Error","X-A-Directory"] %}
+
+      <div class="bg-danger"><b>Error:</b> Description: {{ response.json()["description"] }}:
+
+              {% for header,value in response.headers.items() %}
+                {% if header in error_headers %}
+                  Reason: {{ header }}: {{ value }}
+                   {%  break %}
+                {% endif %}
+              {% endfor %}
+         </div>
+    {%  endif %}
+  {%  endif %}
+  
+    <h2>Select directory where file is stored in CSCS</h2>
+        {# {{ wtf.quick_form(form) }} #}
+      <form method="post" action="download" class="form-group">
+        <table>
+            <tr><td><b>File in server: </b></td><td>{{ form.sourcePath(class="form-control") }}</td></tr>
+            <tr><td>{{ form.submit(class="form-control") }}</td></tr>
+        </table>
+
+      </form>
+
+  
+{% endblock %}

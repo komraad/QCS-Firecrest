@@ -1,0 +1,41 @@
+<!--
+--  Copyright (c) 2019-2021, ETH Zurich. All rights reserved.
+--
+--  Please, refer to the LICENSE file in the root directory.
+--  SPDX-License-Identifier: BSD-3-Clause
+-->
+{% extends "demo_base.html" %}
+{% block title %}External File Upload{% endblock %}
+{% block content %}
+
+  <h1>Large data transfer to CSCS</h1>
+
+  {% if response != None %}
+    {% if not response.ok %}
+      
+      {% set error_headers = ["X-Machine-Does-Not-Exist","X-Machine-Not-Available","X-Permission-Denied","X-Invalid-Path","X-Not-A-Directory","X-Error"] %}
+
+      <div class="bg-danger"><b>Error:</b> Description: {{ response.json()["description"] }}:
+
+              {% for header,value in response.headers.items() %}
+                {% if header in error_headers %}
+                  Reason: {{ header }}: {{ value }}
+                  {%  break %}
+                {% endif %}
+              {% endfor %}
+      </div>
+    {% endif %}
+  {% endif %}
+  
+    <h2>Step 1: Select directory where to store file in CSCS and your local file</h2>
+
+      <form class="form-group" action="upload" method="post">
+        <table style="border-spacing: 20px;">
+            <tr><td style="padding-right: 20px"><b>Target path</b></td><td>{{ form.targetPath(class="form-control") }}</td></tr>
+            <tr><td style="padding-right: 20px"><b>Source file</b></td><td>{{ form.sourcePath(class="form-control") }}</td></tr>
+            <tr><td style="padding-right: 20px">{{ form.submit(class="form-control") }}</td></tr>
+        </table>
+      </form>
+
+  
+{% endblock %}
