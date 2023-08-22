@@ -50,9 +50,9 @@ consumers:
 
 jwt_secrets:
 - consumer: firecrest
-  key: http://192.168.6.63:8080/auth/realms/kcrealm
+  key: http://localhost:8080/auth/realms/kcrealm
   algorithm: "RS256"
-  rsa_public_key: "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtCWuf4mjiDdbBkdBFHBSgnKX/ista8uGq5t97Wq6q4zBEklx6gXxMRl4AOB0qvri+eUYJ21J47T2AQzeY3fg2j62IRcbwQP2haD+aW0UaD994gGNO5fU0RcqjQqHQcKOC2iEjViYYPmBfL7ZicEilhLK1e8GtvxLNcnClnFBPpBUpt2x7YDcrfr7o/Xq/pTYF6ImCIjfiEBkzjbigDRaV5gAT7JJ+uHj8bPl2OJGyWFakO4ZitHo8x9HBZ11TuzUe2IeCCrLU4KZN2MBbzAgk+Dpqpz2gKUh4qIfhhlBx0LdcpPfQaxae6MwbKFdZ9Z0AMu1Etm2loM+K9hfuGudNwIDAQAB\n-----END PUBLIC KEY-----"
+  rsa_public_key: "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqB44q32bQp8LbyW6dQvgsjseXESkLT1g5LQKGb+P79AC+nOAtxhn8i/kmgc6zsQH8NlUtNJruLxlzdo2/OGmlDGYZH1x6VmAwvJPJ4er0xPUrvZ8YclxYQC16PY5LFiQRNBMRyQwP5Kne1O46FpmADFVWMfoabdnaqoXexxB56b25o8tE2ulRBgfpnrRgZAvf7kWjugRCNO06FV074FVMYHA1aBk0ICyaFCDM/Tb5oaDyGr5c/ZvdrRUrw8vaiYyMgaAnnJPL75cebGoHeMJaEyZalsHA+iuhRAfeAwpSClsmhVqnfH7a7hqrqumVRo27dydqmfVgpFjU5gbFcBZ5wIDAQAB\n-----END PUBLIC KEY-----"
 
 routes:
 - name: reject

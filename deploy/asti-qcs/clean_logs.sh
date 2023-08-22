@@ -1,9 +1,9 @@
 #!/bin/bash
 echo -n "Removing logs and temp files... "
-sudo rm -fr logs/client/*.log
-sudo rm -fr logs/cluster/*.log
-sudo rm -fr logs/firecrest/*.log
-sudo rm -fr logs/keycloak/*.log
-sudo rm -fr minio/.minio.sys
-sudo rm -fr taskpersistence-data/dump.rdb taskpersistence-data/redis.log
+rm -fr logs/client/*.log
+rm -fr logs/cluster/*.log
+rm -fr logs/firecrest/*.log
+rm -fr logs/keycloak/*.log
+rm -fr minio/.minio.sys
+rm -fr taskpersistence-data/dump.rdb taskpersistence-data/redis.log
 echo "done."
