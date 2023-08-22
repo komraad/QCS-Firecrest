@@ -8,5 +8,3 @@ FirecREST provides a REST API that defines a set of HTTP methods through which d
 
 All the endpoints are listed in FirecREST's [OpenAPI specification](https://firecrest-api.cscs.ch/). You can also find more information on its services and examples in our [documentation](https://firecrest.readthedocs.io).
 
-
-TESting
