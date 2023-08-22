@@ -6,12 +6,24 @@
 ##
 openapi: 3.0.0
 servers:
-  - url: "http://192.168.6.63:8000"
+  - url: "http://localhost:8000"
 info:
-  version: 1.13.0
-  title: FirecREST Developers API
+  version: 1.13.1
+  title: FirecREST API
   description: >
-    This API specification is intended for FirecREST developers only. There're some endpoints that are not available in the public version for client developers.
+    FirecREST platform, a RESTful Services Gateway to HPC resources, is a
+    high-performance and reusable framework that integrates with existing HPC
+    infrastructure, thus enabling the access to HPC resources to web-enabled
+    services.
+
+
+    FirecREST provides a REST API that defines a set of functions through which
+    developers can interact with using the HTTP/REST protocol architecture.
+    Calls to the REST API received by the services gateway are translated into
+    the appropriate infrastructure requests. Among the most prominent services
+    that FirecREST exposes we find authentication and authorization, system
+    status, file-system access, data mover, execution of parallel jobs,
+    accounting information, etc.
 paths:
   '/status/services':
     get:
@@ -21,9 +33,6 @@ paths:
         description, and status.
       tags:
         - Status
-      # parameters:
-      #   - $ref: '#/components/parameters/pageSize'
-      #   - $ref: '#/components/parameters/pageNumber'
       responses:
         '200':
           description: List of services with status and description.
@@ -154,7 +163,7 @@ paths:
           content:
             text/plain:
               schema:
-                type: string
+                $ref: '#/components/schemas/Utilities-notok'
           headers:
             X-Machine-Does-Not-Exist:
               description: Machine does not exist
@@ -219,7 +228,7 @@ paths:
           content:
             text/plain:
               schema:
-                type: string
+                $ref: '#/components/schemas/Utilities-notok'
           headers:
             X-Machine-Does-Not-Exist:
               description: Machine does not exist
@@ -291,7 +300,7 @@ paths:
           content:
             text/plain:
               schema:
-                type: string
+                $ref: '#/components/schemas/Utilities-notok'
           headers:
             X-Machine-Does-Not-Exist:
               description: Machine does not exist
@@ -365,7 +374,7 @@ paths:
           content:
             text/plain:
               schema:
-                type: string
+                $ref: '#/components/schemas/Utilities-notok'
           headers:
             X-Machine-Does-Not-Exist:
               description: Machine does not exist
@@ -440,7 +449,7 @@ paths:
           content:
             text/plain:
               schema:
-                type: string
+                $ref: '#/components/schemas/Utilities-notok'
           headers:
             X-Machine-Does-Not-Exist:
               description: Machine does not exist
@@ -515,7 +524,7 @@ paths:
           content:
             text/plain:
               schema:
-                type: string
+                $ref: '#/components/schemas/Utilities-notok'
           headers:
             X-Machine-Does-Not-Exist:
               description: Machine does not exist
@@ -580,7 +589,7 @@ paths:
           content:
             text/plain:
               schema:
-                type: string
+                $ref: '#/components/schemas/Utilities-notok'
           headers:
             X-Machine-Does-Not-Exist:
               description: Machine does not exist
@@ -639,6 +648,11 @@ paths:
         - name: lines
           in: query
           description: Returns the first N lines, accepts K, KB, MB, etc
+          schema:
+            type: string
+        - name: skip_ending
+          in: query
+          description: The output will be the whole file, without the last NUM bytes/lines of each file. NUM should be specified in the respective argument through `bytes` or `lines`.
           schema:
             type: string
       responses:
@@ -713,12 +727,16 @@ paths:
               schema:
                 $ref: '#/components/schemas/File-Stat-metadata'
         '400':
-          description: Error in file operation
+          description: Error on stat operation
           content:
             text/plain:
               schema:
-                type: string
+                $ref: '#/components/schemas/Utilities-notok'
           headers:
+            X-Invalid-Path:
+              description: <path> is an invalid path
+              schema:
+                type: string
             X-Machine-Does-Not-Exist:
               description: Machine does not exist
               schema:
@@ -727,18 +745,19 @@ paths:
               description: Machine is not available
               schema:
                 type: string
+            X-Not-A-Directory:
+              description: targetPath is not a directory
+              schema:
+                type: string
             X-Permission-Denied:
               description: User does not have permissions to access machine or paths
               schema:
-                type: string
-            X-Invalid-Path:
-              description: <path> is an invalid path
-              schema:
-                type: string
+                type: string            
             X-Timeout:
               description: Command has finished with timeout signal
               schema:
                 type: string
+
         '401':
           description: No auth header given
           content:
@@ -791,7 +810,7 @@ paths:
           content:
             text/plain:
               schema:
-                type: string
+                $ref: '#/components/schemas/Utilities-notok'
           headers:
             X-Machine-Does-Not-Exist:
               description: Machine does not exist
@@ -850,6 +869,11 @@ paths:
           description: Returns the last N lines, accepts K, KB, MB, etc
           schema:
             type: string
+        - name: skip_beginning
+          in: query
+          description: The output will start with byte/line NUM of each file. NUM should be specified in the respective argument through `bytes` or `lines`.
+          schema:
+            type: boolean
       responses:
         '200':
           description: File content successfully returned
@@ -920,8 +944,12 @@ paths:
           content:
             text/plain:
               schema:
-                type: string
+                $ref: '#/components/schemas/Utilities-notok'
           headers:
+            X-Invalid-Path:
+              description: <path> is invalid
+              schema:
+                type: string
             X-Machine-Does-Not-Exist:
               description: Machine does not exist
               schema:
@@ -934,10 +962,10 @@ paths:
               description: User does not have permissions to access machine or path
               schema:
                 type: string
-            X-Invalid-Path:
-              description: <path> is invalid
+            X-Size-Limit:
+              description: File exceeds size limit
               schema:
-                type: string
+                type: string            
   '/utilities/upload':
     parameters:
       - in: header
@@ -983,7 +1011,7 @@ paths:
           content:
             text/plain:
               schema:
-                type: string
+                $ref: '#/components/schemas/Utilities-notok'
           headers:
             X-Machine-Does-Not-Exist:
               description: Machine does not exist
@@ -1040,7 +1068,7 @@ paths:
           content:
             text/plain:
               schema:
-                type: string
+                $ref: '#/components/schemas/Utilities-notok'
           headers:
             X-Machine-Does-Not-Exist:
               description: Machine does not exist
@@ -1156,6 +1184,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/Utilities-notok'
           headers:
+            X-A-Directory:
+              description: <targetPath> is a directory, can't checksum directories
+              schema:
+                type: string
+            X-Invalid-Path:
+              description: <path> is invalid
+              schema:
+                type: string
             X-Machine-Does-Not-Exist:
               description: Machine does not exist
               schema:
@@ -1168,18 +1204,15 @@ paths:
               description: User does not have permissions to access machine or path
               schema:
                 type: string
-            X-Invalid-Path:
-              description: <path> is invalid.
+            X-Size-Limit:
+              description: File exceeds size limit
               schema:
-                type: string
+                type: string            
             X-Timeout:
               description: Command has finished with timeout signal
               schema:
                 type: string
-            X-A-Directory:
-              description: <targetPath> is a directory, can't checksum directories
-              schema:
-                type: string
+            
   '/utilities/whoami':
     parameters:
       - in: header
@@ -1200,6 +1233,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Utilities-ok'
+
         '400':
           description: Failed to return username
           content:
@@ -1869,7 +1903,7 @@ paths:
                   description: source path to the file in local machine
                 targetPath:
                   type: string
-                  description: absolute path to destination (directory or file)                
+                  description: absolute path to destination (directory or file)
               required:
                 - sourcePath
                 - targetPath
@@ -2007,10 +2041,17 @@ paths:
                 $ref: '#/components/schemas/Task-Creation-Error'
   '/tasks':
     get:
-      summary: Returns all tasks
+      summary: Returns all tasks (or a subset)
       description: List all recorded tasks and their status.
       tags:
         - Tasks
+      parameters:
+        - in: query
+          name: tasks
+          schema:
+            type: string
+          description: Comma-separated list of `{task_id}`
+          required: false
       responses:
         '200':
           description: tasks in queue
@@ -2018,49 +2059,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Tasks'
-    post:
-      summary: Creates a new task
-      description: Creates a new task.
-      parameters:
-      - in: header
-        name: X-Firecrest-Service
-        description: Name of the service for which the task will be created ("compute" or "storage")
-        required: true
-        schema:
-          type: string
-      tags:
-        - Tasks
-      responses:
-        '201':
-          description: Task created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Task-Post-Ok'
-        '400':
-          description: Error creating task
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Expiration-400'
-        '401':
-          description: Not authorized.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Expiration-400'
-        '403':
-          description: Parameters error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Expiration-403'
-        '404':
-          description: Task not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Expiration-404'
   '/tasks/{taskid}':
     parameters:
       - name: taskid
@@ -2102,107 +2100,6 @@ paths:
                   - $ref: '#/components/schemas/Task-Compute-Acct-400'
                   - $ref: '#/components/schemas/Task-Compute-Delete-200'
                   - $ref: '#/components/schemas/Task-Compute-Delete-400'
-    put:
-     summary: Updates a task
-     description: Updates a task entry that keeps track of progress
-     parameters:
-      - in: header
-        name: X-Firecrest-Service
-        description: Name of the service for which the task will be created ("compute"/"storage")
-        required: true
-        schema:
-          type: string
-     tags:
-       - Tasks
-     responses:
-        '200':
-          description: Task updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Expiration-ok'
-        '400':
-          description: Error updating task
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Expiration-400'
-        '403':
-          description: Parameters error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Expiration-403'
-        '404':
-          description: Task not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Expiration-404'
-    delete:
-     summary: Delete task
-     description: Delete a already existing task
-     tags:
-       - Tasks
-     responses:
-        '204':
-          description: Task deleted
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Expiration-ok'
-        '400':
-          description: Error deleting task
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Expiration-400'
-        '403':
-          description: Parameters error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Expiration-403'
-        '404':
-          description: Task not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Expiration-404'
-
-  '/tasks/expire/{task_id}':
-    post:
-      summary: Marks tasks with an expiration time
-      description: Marks tasks with an expiration time. After that the tasks will be removed.
-      tags:
-        - Tasks
-      responses:
-        '200':
-          description: Task marked for expiration successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Expiration-ok'
-        '400':
-          description: Error marking task for expiration
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Expiration-400'
-        '403':
-          description: Parameters error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Expiration-403'
-        '404':
-          description: Task not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Expiration-404'
-
-
   '/reservations':
     parameters:
       - in: header
@@ -2529,32 +2426,6 @@ paths:
               schema:
                 type: integer
 
-
-
-
-
-  '/certificator':
-    post:
-      summary: Creates SSH certificates
-      description: creates an SSH certificate to be used for system command execution
-      tags:
-        - 'Certificator'
-      responses:
-        '200':
-          description: certificate created.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Certificator-ok'
-
-        '404':
-          description: Error creating certificate.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Certificator-notok'
-
-
 components:
   securitySchemes:
     bearerAuth:
@@ -2601,7 +2472,7 @@ components:
       content:
         '*/*':
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: '#/components/schemas/Utilities-notok'
     Standard400Error:
       description: Bad Request error
     Standard500Error:
@@ -2741,12 +2612,6 @@ components:
                   type: string
                 unit:
                   type: string
-    Error:
-      properties:
-        code:
-          type: string
-        message:
-          type: string
     Service:
       required:
         - service
@@ -2755,11 +2620,11 @@ components:
           type: string
         status:
           type: string
-        status_code:
-          type: integer
           enum:
             - available
             - unavailable
+        status_code:
+          type: integer
         description:
           type: string
     Services:
@@ -2798,55 +2663,6 @@ components:
           type: string
         nodelist:
           type: string
-    Certificator-ok:
-      type: object
-      properties:
-          certificate:
-            type: string
-            description: SSH certificate
-    Certificator-notok:
-      type: object
-      properties:
-          description:
-            type: string
-            description: Error description.
-          error:
-            type: string
-            description: Error description.
-    Expiration-ok:
-      type: object
-      properties:
-        success:
-          type: string
-          description: Success description
-    Expiration-400:
-      type: object
-      properties:
-        error:
-          type: string
-          description: Error description
-    Expiration-403:
-      type: object
-      properties:
-        error:
-          type: string
-          description: Operation not permitted
-    Expiration-404:
-      type: object
-      properties:
-        error:
-          type: string
-          description: Task not found
-    Task-Post-Ok:
-      type: object
-      properties:
-          hash_id:
-            type: string
-            description: unique task ID
-          task_url:
-            type: string
-            description: URL for querying the task
-
     Jobs:
       type: array
       items:
@@ -2885,6 +2701,8 @@ components:
         status:
           type: string
         service:
+          type: string
+        system:
           type: string
         task_url:
           type: string
@@ -2999,6 +2817,9 @@ components:
         service:
           type: string
           description: FirecREST service that is related to the task (`"compute"` or `"storage"`)
+        system:
+          type: string
+          description: system for which the task was created
         task_url:
           type: string
           description: URL of the task
@@ -3064,6 +2885,9 @@ components:
         service:
           type: string
           description: FirecREST service that is related to the task (in this case is always `"storage"`)
+        system:
+          type: string
+          description: system for which the storage task was created
         task_url:
           type: string
           description: URL of the task
@@ -3159,6 +2983,9 @@ components:
         service:
           type: string
           description: FirecREST service that is related to the task (in this case is always `"storage"`)
+        system:
+          type: string
+          description: system for which the storage task was created
         task_url:
           type: string
           description: URL of the task
@@ -3254,6 +3081,9 @@ components:
         service:
           type: string
           description: FirecREST service that is related to the task (in this case is always `"storage"`)
+        system:
+          type: string
+          description: system for which the storage task was created
         task_url:
           type: string
           description: URL of the task
@@ -3320,6 +3150,9 @@ components:
         service:
           type: string
           description: FirecREST service that is related to the task (in this case is always `storage`)
+        system:
+          type: string
+          description: system for which the storage task was created
         task_url:
           type: string
           description: URL of the task
@@ -3386,6 +3219,9 @@ components:
         service:
           type: string
           description: FirecREST service that is related to the task (in this case is always `storage`)
+        system:
+          type: string
+          description: system for which the compute task was created
         task_url:
           type: string
           description: URL of the task
@@ -3452,6 +3288,9 @@ components:
         service:
           type: string
           description: FirecREST service that is related to the task (in this case is always `"storage"`)
+        system:
+          type: string
+          description: system for which the storage task was created
         task_url:
           type: string
           description: URL of the task
@@ -3469,9 +3308,18 @@ components:
           type: string
           description: Description of the status of the task ('Started upload from filesystem to Object Storage')
         data:
-          type: string
+          type: object
           description: Data concerning the status of the task
-          default: "Started upload from filesystem to Object Storage"
+          properties:
+            error:
+              type: string
+              description: Error message, if any
+            source:
+              type: string
+              description: Local path to the file to be downloaded
+            system_name:
+              type: string
+              description: system where the file to download is located
         created_at:
           type: string
           description: Date and time of the task creation (format=`%Y-%m-%dT%H:%M:%S`)
@@ -3490,6 +3338,9 @@ components:
         service:
           type: string
           description: FirecREST service that is related to the task (in this case is always `"storage"`)
+        system:
+          type: string
+          description: system for which the storage task was created
         task_url:
           type: string
           description: URL of the task
@@ -3507,8 +3358,18 @@ components:
           type: string
           description: Description of the status of the task ('Upload from filesystem to Object Storage has finished succesfully')
         data:
-          type: string
-          description: Temporary URL for downloading object from Object Storage location
+          type: object
+          description: Data concerning the status of the task
+          properties:
+            url:
+              type: string
+              description: Download URL
+            source:
+              type: string
+              description: Local path to the file to be downloaded
+            system_name:
+              type: string
+              description: system where the file to download is located
         created_at:
           type: string
           description: Date and time of the task creation (format=`%Y-%m-%dT%H:%M:%S`)
@@ -3527,6 +3388,9 @@ components:
         service:
           type: string
           description: FirecREST service that is related to the task (in this case is always `"storage"`)
+        system:
+          type: string
+          description: system for which the storage task was created
         task_url:
           type: string
           description: URL of the task
@@ -3544,8 +3408,18 @@ components:
           type: string
           description: Description of the status of the task ('Upload from filesystem to Object Storage has finished with errors')
         data:
-          type: string
-          description: Error message describing the failure in the action
+          type: object
+          description: Data concerning the status of the task
+          properties:
+            error:
+              type: string
+              description: Error message, if any
+            source:
+              type: string
+              description: Local path to the file to be downloaded
+            system_name:
+              type: string
+              description: system where the file to download is located
         created_at:
           type: string
           description: Date and time of the task creation (format=`%Y-%m-%dT%H:%M:%S`)
@@ -3564,6 +3438,9 @@ components:
         service:
           type: string
           description: FirecREST service that is related to the task (in this case is always `"storage"`)
+        system:
+          type: string
+          description: system for which the storage task was created
         task_url:
           type: string
           description: URL of the task
@@ -3629,6 +3506,9 @@ components:
         service:
           type: string
           description: FirecREST service that is related to the task (in this case is always `"compute"`)
+        system:
+          type: string
+          description: system for which the compute task was created
         task_url:
           type: string
           description: URL of the task
@@ -3666,6 +3546,9 @@ components:
         service:
           type: string
           description: FirecREST service that is related to the task (in this case is always `"compute"`)
+        system:
+          type: string
+          description: system for which the compute task was created
         task_url:
           type: string
           description: URL of the task
@@ -3711,6 +3594,9 @@ components:
         service:
           type: string
           description: FirecREST service that is related to the task (in this case is always `"compute"`)
+        system:
+          type: string
+          description: system for which the compute task was created
         task_url:
           type: string
           description: URL of the task
@@ -3748,6 +3634,9 @@ components:
         service:
           type: string
           description: FirecREST service that is related to the task (in this case is always `"compute"`)
+        system:
+          type: string
+          description: system for which the compute task was created
         task_url:
           type: string
           description: URL of the task
@@ -3786,6 +3675,9 @@ components:
         service:
           type: string
           description: FirecREST service that is related to the task (in this case is always `"compute"`)
+        system:
+          type: string
+          description: system for which the compute task was created
         task_url:
           type: string
           description: URL of the task
@@ -3823,6 +3715,9 @@ components:
         service:
           type: string
           description: FirecREST service that is related to the task (in this case is always `"compute"`)
+        system:
+          type: string
+          description: system for which the compute task was created
         task_url:
           type: string
           description: URL of the task
@@ -3860,6 +3755,9 @@ components:
         service:
           type: string
           description: FirecREST service that is related to the task (in this case is always `"compute"`)
+        system:
+          type: string
+          description: system for which the compute task was created
         task_url:
           type: string
           description: URL of the task
@@ -3897,6 +3795,9 @@ components:
         service:
           type: string
           description: FirecREST service that is related to the task (in this case is always `"compute"`)
+        system:
+          type: string
+          description: system for which the compute task was created
         task_url:
           type: string
           description: URL of the task

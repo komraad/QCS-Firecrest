@@ -21,6 +21,8 @@ import re
 import time
 import threading
 
+from typing import Union
+
 
 # Checks if an environment variable injected to F7T is a valid True value
 # var <- object
@@ -78,6 +80,10 @@ POLICY_PATH = os.environ.get("F7T_POLICY_PATH","v1/data/f7t/authz").strip('\'"')
 USE_SSL = get_boolean_var(os.environ.get("F7T_USE_SSL", False))
 SSL_CRT = os.environ.get("F7T_SSL_CRT", "")
 SSL_KEY = os.environ.get("F7T_SSL_KEY", "")
+
+### SSH key paths
+PUB_USER_KEY_PATH = os.environ.get("F7T_PUB_USER_KEY_PATH", "/user-key.pub")
+PRIV_USER_KEY_PATH = os.environ.get("F7T_PRIV_USER_KEY_PATH", "/user-key")
 
 TRACER_HEADER = "uber-trace-id"
 
@@ -286,16 +292,16 @@ def create_certificate(headers, cluster_name, cluster_addr, command=None, option
         # create temp dir to store certificate for this request
         td = tempfile.mkdtemp(prefix="dummy")
 
-        os.symlink(os.getcwd() + "/user-key.pub", td + "/user-key.pub")  # link on temp dir
-        os.symlink(os.getcwd() + "/user-key", td + "/user-key")  # link on temp dir
-        certf = open(td + "/user-key-cert.pub", 'w')
+        os.symlink(PUB_USER_KEY_PATH, f"{td}/user-key.pub")  # link on temp dir
+        os.symlink(PRIV_USER_KEY_PATH, f"{td}/user-key")  # link on temp dir
+        certf = open(f"{td}/user-key-cert.pub", 'w')
         certf.write(jcert["certificate"])
         certf.close()
         # stat.S_IRUSR -> owner has read permission
-        os.chmod(td + "/user-key-cert.pub", stat.S_IRUSR)
+        os.chmod(f"{td}/user-key-cert.pub", stat.S_IRUSR)
 
         # keys: [pub_cert, pub_key, priv_key, temp_dir]
-        return [td + "/user-key-cert.pub", td + "/user-key.pub", td + "/user-key", td]
+        return [f"{td}/user-key-cert.pub", f"{td}/user-key.pub", f"{td}/user-key", td]
     except requests.exceptions.SSLError as ssle:
         logging.error(f"(-2) -> {ssle}")
         logging.error(f"(-2) -> {ssle.strerror}")
@@ -440,7 +446,7 @@ def exec_remote_command(headers, system_name, system_addr, action, file_transfer
             outlines = output
         else:
             # replace newlines with $ for parsing
-            outlines = output.replace('\n', '$')[:-1]
+            outlines = output[:-1]
 
         # hiding success results from utilities/download, since output is the content of the file
         if file_transfer == "download":
@@ -583,14 +589,27 @@ def parse_io_error(retval, operation, path):
 
 
 # function to call create task entry API in Queue FS, returns task_id for new task
-def create_task(headers, service=None):
+def create_task(headers, service=None, system=None, init_data=None) -> Union[str,int]:
+    '''
+    Creates an asynchronous task and returns the new task_id, if task creation fails returns -1
+
+    Parameters:
+    - headers (dict): HTTP headers from the initial call of the user (user identity data is taken from here)
+    - service (Union[str,None]): name of the service where the task creation was started ("compute" or "storage")
+    - system (Union[str,None]): name of the system which the task was started for
+    - init_data (Union[dict,None]): initial data for the task creation
+
+    Returns:
+    - Union[str,int]: task ID of the newly created task, in case of fail returns -1
+    '''
 
     # returns {"task_id":task_id}
     # first try to get up task microservice:
     try:
         # X-Firecrest-Service: service that created the task
         headers["X-Firecrest-Service"] = service
-        req = requests.post(f"{TASKS_URL}/", headers=headers, verify=(SSL_CRT if USE_SSL else False))
+        headers["X-Machine-Name"] = system
+        req = requests.post(f"{TASKS_URL}/", data={"init_data": init_data}, headers=headers, verify=(SSL_CRT if USE_SSL else False))
 
     except requests.exceptions.ConnectionError as e:
         logging.error(type(e), exc_info=True)
@@ -600,7 +619,8 @@ def create_task(headers, service=None):
     if req.status_code != 201:
         return -1
 
-    logging.info(json.loads(req.content))
+    if DEBUG_MODE:
+        logging.info(json.loads(req.content))
     resp = json.loads(req.content)
     task_id = resp["hash_id"]
 
@@ -608,7 +628,20 @@ def create_task(headers, service=None):
 
 
 # function to call update task entry API in Queue FS
-def update_task(task_id, headers, status, msg=None, is_json=False):
+def update_task(task_id: str, headers: dict, status: str, msg:Union[str,dict,None]=None, is_json:bool=False) -> dict:
+    '''
+    Updates an asynchronous task information
+
+    Parameters:
+    - task_id (str): unique identifier of the async task
+    - headers (dict): HTTP headers from the initial call of the user (user identity data is taken from here)
+    - status (str): new status of the task
+    - msg (Union[str,dict,None]): new data of the task
+    - is_json (bool): True if the msg is coded as JSON
+
+    Returns:
+    - dict: response of the task microservice with the outcome of updating the task
+    '''
 
     logging.info(f"Update {TASKS_URL}/{task_id} -> status: {status}")
 
@@ -623,8 +656,19 @@ def update_task(task_id, headers, status, msg=None, is_json=False):
     resp = json.loads(req.content)
     return resp
 
-# function to call update task entry API in Queue FS
-def expire_task(task_id, headers, service):
+
+def expire_task(task_id, headers, service) -> bool:
+    '''
+    Set an expiration time to a task to be deleted in the persistence backend (expiration time will depend on the /tasks microservice)
+
+    Parameters:
+    - task_id (str): unique identifier of the async task
+    - headers (dict): HTTP headers from the initial call of the user (user identity data is taken from here)
+    - service (Union[str,None]): name of the service where the task creation was started ("compute" or "storage")
+
+    Returns:
+    - bool: True if the task has been expired correctly
+    '''
 
     logging.info(f"{TASKS_URL}/expire/{task_id}")
     try:
@@ -642,7 +686,17 @@ def expire_task(task_id, headers, service):
     return True
 
 # Delete task (used only in /xfer-external/invalidate)
-def delete_task(task_id, headers):
+def delete_task(task_id, headers) -> bool:
+    '''
+    Mark a task to be deleted in the persistence backend immediatelly
+
+    Parameters:
+    - task_id (str): unique identifier of the async task
+    - headers (dict): HTTP headers from the initial call of the user (user identity data is taken from here)
+
+    Returns:
+    - bool: True if the task has been deleted correctly
+    '''
 
     logging.info(f"DELETE {TASKS_URL}/{task_id}")
     try:
@@ -661,7 +715,17 @@ def delete_task(task_id, headers):
 
 
 # function to check task status:
-def get_task_status(task_id, headers):
+def get_task_status(task_id, headers) -> Union[dict,int]:
+    '''
+    Return task status
+
+    Parameters:
+    - task_id (str): unique identifier of the async task
+    - headers (dict): HTTP headers from the initial call of the user (user identity data is taken from here)
+
+    Returns:
+    - dict: with status information. If there is an error on the Tasks microservice, then returns -1
+    '''
 
     logging.info(f"{TASKS_URL}/{task_id}")
     try:
@@ -832,86 +896,91 @@ def check_command_error(error_str, error_code, service_msg):
 
     if error_code == -2:
         header = {"X-Machine-Not-Available": "Machine is not available"}
-        return {"description": service_msg, "status_code": 400, "header": header}
+        return {"description": service_msg, "error": "Machine is not available", "status_code": 400, "header": header}
 
     if error_code == 113:
         header = {"X-Machine-Not-Available":"Machine is not available"}
-        return {"description": service_msg, "status_code": 400, "header": header}
+        return {"description": service_msg, "error":  "Machine is not available", "status_code": 400, "header": header}
 
     if error_code == 124:
         header = {"X-Timeout": "Command has finished with timeout signal"}
-        return {"description": service_msg, "status_code": 400, "header": header}
+        return {"description": service_msg, "error":"Command has finished with timeout signal", "status_code": 400, "header": header}
 
     if error_code == 118:
         header = {"X-Error": "Command execution is not allowed in machine"}
-        return {"description": service_msg, "status_code": 400, "header": header}
+        return {"description": service_msg, "error":"Command execution is not allowed in machine", "status_code": 400, "header": header}
 
     # When certificate doesn't match SSH configuration
     if in_str(error_str,"OPENSSH"):
         header = {"X-Permission-Denied": "User does not have permissions to access machine"}
-        return {"description": service_msg, "status_code": 400, "header": header}
+        return {"description": service_msg, "error": error_str, "status_code": 400, "header": header}
 
     if in_str(error_str,"cannot access"):
         header={"X-Invalid-Path":"path is an invalid path"}
-        return {"description": service_msg, "status_code": 400, "header": header}
+        return {"description": service_msg, "error": error_str, "status_code": 400, "header": header}
 
     if in_str(error_str,"No such file"):
         if in_str(error_str,"cannot stat"):
             header={"X-Not-Found":"sourcePath not found"}
-            return {"description": service_msg, "status_code": 400, "header": header}
+            return {"description": service_msg, "error": error_str, "status_code": 400, "header": header}
 
         # copy: cannot create, rename: cannot move
         if in_str(error_str, "cannot create") or in_str(error_str,"cannot move"):
             header = {"X-Invalid-Path": "sourcePath and/or targetPath are invalid paths"}
-            return {"description": service_msg, "status_code": 400, "header": header}
+            return {"description": service_msg, "error": error_str, "status_code": 400, "header": header}
 
         if in_str(error_str,"cannot remove"):
             header = {"X-Invalid-Path": "path is an invalid path."}
-            return {"description": service_msg, "status_code": 400, "header": header}
+            return {"description": service_msg, "error": error_str, "status_code": 400, "header": header}
 
         header={"X-Invalid-Path":"path is an invalid path"}
-        return {"description": service_msg, "status_code": 400, "header": header}
+        return {"description": service_msg, "error": error_str, "status_code": 400, "header": header}
 
     if in_str(error_str,"cannot open"):
         header = {"X-Permission-Denied": "User does not have permissions to access path"}
-        return {"description":service_msg, "status_code": 400, "header": header}
+        return {"description":service_msg, "error": error_str, "status_code": 400, "header": header}
 
     if in_str(error_str,"Permission denied"):
         header = {"X-Permission-Denied": "User does not have permissions to access path"}
-        return {"description": service_msg, "status_code": 400, "header": header}
+        return {"description": service_msg, "error": error_str, "status_code": 400, "header": header}
 
-    if in_str(error_str,"exists") and in_str(error_str,"mkdir"):
-        header = {"X-Exists": "targetPath directory already exists"}
-        return {"description": service_msg, "status_code": 400, "header": header}
+    if ("File exists" in error_str) and ("mkdir: cannot create directory" in error_str or "ln: failed to create symbolic link" in error_str):
+        header = {"X-Exists": "targetPath already exists"}
+        return {"description": service_msg, "error": error_str, "status_code": 400, "header": header}
+
+    if in_str(error_str,"Not a directory"):
+        header = {"X-Not-A-Directory": "targetPath is not a directory"}
+        return {"description": service_msg, "error": error_str, "status_code": 400, "header": header}
 
     if in_str(error_str,"directory"):
         header = {"X-A-Directory": "path is a directory, can't checksum directories"}
-        return {"description": service_msg, "status_code": 400, "header": header}
+        return {"description": service_msg, "error": error_str, "status_code": 400, "header": header}
 
     # if already exists, not overwrite (-i)
     if in_str(error_str,"overwrite"):
         header = {"X-Exists": "targetPath already exists"}
-        return {"description": service_msg, "status_code": 400, "header": header}
+        return {"description": service_msg, "error": error_str, "status_code": 400, "header": header}
 
     if in_str(error_str,"not permitted"):
         header = {"X-Permission-Denied": "User does not have permissions to access path"}
-        return {"description": service_msg, "status_code": 400, "header": header}
+        return {"description": service_msg, "error": error_str, "status_code": 400, "header": header}
 
     if in_str(error_str,"invalid group"):
         header = {"X-Invalid-Group": "group is an invalid group"}
-        return {"description": service_msg, "status_code": 400, "header": header}
+        return {"description": service_msg, "error": error_str, "status_code": 400, "header": header}
 
     if in_str(error_str,"invalid user"):
         header = {"X-Invalid-Owner": "owner is an invalid user"}
-        return {"description": service_msg, "status_code": 400, "header": header}
+        return {"description": service_msg, "error": error_str, "status_code": 400, "header": header}
 
     if in_str(error_str, "invalid mode"):
         header = {"X-Invalid-Mode": "mode is an invalid mode"}
-        return {"description": service_msg, "status_code": 400, "header": header}
+        return {"description": service_msg, "error": error_str, "status_code": 400, "header": header}
 
     if in_str(error_str, "read permission"):
         header = {"X-Permission-Denied": "User does not have permissions to access path"}
-        return {"description": service_msg, "status_code": 400, "header": header}
+        return {"description": service_msg, "error": error_str, "status_code": 400, "header": header}
+
     header = {"X-Error": error_str}
     return {"description": service_msg, "error": error_str, "status_code": 400, "header": header}
 
@@ -963,5 +1032,5 @@ def setup_logging(logging, service):
     else:
         logging.getLogger().setLevel(logging.INFO)
         logging.info("DEBUG_MODE: False")
-    
+
     return logger

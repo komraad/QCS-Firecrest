@@ -13,8 +13,11 @@ import logging
 from flask_opentracing import FlaskTracing
 from jaeger_client import Config
 
-from cscs_api_common import check_auth_header, get_username, check_header, get_boolean_var, setup_logging
+from cscs_api_common import check_auth_header, get_username, check_header, \
+    get_boolean_var, setup_logging, validate_input
 import tasks_persistence as persistence
+
+
 
 AUTH_HEADER_NAME = 'Authorization'
 
@@ -114,13 +117,18 @@ def list_tasks():
 
     username = is_username_ok["username"]
 
+    task_list = request.args.get("tasks",None)
+    if task_list != None:
+        v = validate_input(task_list)
+        if v != "":
+            return jsonify(description="Failed to retrieve tasks information", error=f"'tasks' {v}"), 400
+        
+        task_list = task_list.split(",")
+
     user_tasks = {}
 
-    #iterate over tasks getting user tasks
-    for task_id,task in tasks.items():
-        if task.user == username:
-            user_tasks[task_id] = task.get_status()
-
+    user_tasks = persistence.get_user_tasks(r,username, task_list=task_list)
+   
     data = jsonify(tasks=user_tasks)
     return data, 200
 
@@ -137,6 +145,14 @@ def create_task():
 
     except KeyError:
         return jsonify(description="No service informed"), 403
+    
+    # checks if the request has the X-Machine-Name header
+    system = None
+    try:
+        system = request.headers["X-Machine-Name"]
+    except KeyError:
+        app.logger.warning("X-Machine-Name header not set for this task")
+
 
 
     auth_header = request.headers[AUTH_HEADER_NAME]
@@ -153,6 +169,12 @@ def create_task():
 
     username = is_username_ok["username"]
 
+    try:
+        init_data = request.form.get("init_data")
+    except KeyError as ke:
+        if DEBUG_MODE:
+            app.logger.warning("Not initial data set in the task creation")
+
     # QueuePersistence connection
     global r
 
@@ -164,7 +186,9 @@ def create_task():
         return jsonify(description="Couldn't create task"), 400
 
     # create task with service included
-    t = async_task.AsyncTask(task_id=str(task_id), user=username, service=service)
+
+    t = async_task.AsyncTask(task_id=str(task_id), user=username, service=service, system=system,data=init_data)
+
     tasks[t.hash_id] = t
     if JAEGER_AGENT != "":
         try:
