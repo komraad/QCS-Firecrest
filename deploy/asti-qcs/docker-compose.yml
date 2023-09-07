@@ -23,7 +23,10 @@ services:
       context: ../../
       dockerfile: deploy/docker/base/Dockerfile
       network: host
+
+
   # FirecREST microservices
+  #----- Certificator Microservice -------#
   certificator:
     image: f7t-certificator
     container_name: certificator
@@ -43,10 +46,12 @@ services:
       - 5010:5010
     volumes:
       - ./logs/firecrest:/var/log:delegated
-      - ../test-build/environment/keys/user-key.pub:/etc/firecrest/user-key.pub:ro
-      - ../test-build/environment/keys/ca-key:/etc/firecrest/ca-key:ro
+      - ./keys/user-key.pub:/etc/firecrest/user-key.pub:ro
+      - ./keys/ca-key:/etc/firecrest/ca-key:ro
       - ./ssl:/ssl
 
+
+  #----- Compute Microservice ------#
   compute:
     image: f7t-compute
     container_name: compute
@@ -65,9 +70,11 @@ services:
       - 5006:5006
     volumes:
       - ./logs/firecrest:/var/log:delegated
-      - ../test-build/environment/keys/user-key:/etc/firecrest/ssh/user-key:ro
+      - ./keys/user-key:/etc/firecrest/ssh/user-key:ro
       - ./ssl:/ssl
 
+
+  #------ Status Microservice ------#
   status:
     image: f7t-status
     container_name: status
@@ -86,6 +93,8 @@ services:
       - ./logs/firecrest:/var/log:delegated
       - ./ssl:/ssl
 
+
+  #----- Storage Microservice ------#
   storage:
     image: f7t-storage
     container_name: storage
@@ -109,9 +118,11 @@ services:
         ipv4_address: 192.168.220.5
     volumes:
       - ./logs/firecrest:/var/log:delegated
-      - ../test-build/environment/keys/user-key:/user-key:ro
+      - ./keys/user-key:/user-key:ro
       - ./ssl:/ssl
 
+     
+  #------ Tasks Microservice -----#
   tasks:
     image: f7t-tasks
     container_name: tasks
@@ -138,6 +149,8 @@ services:
       - ./logs/firecrest:/var/log:delegated
       - ./ssl:/ssl
 
+
+  #------ Utilities Microservice ------#
   utilities:
     image: f7t-utilities
     container_name: utilities
@@ -154,9 +167,11 @@ services:
       - 5004:5004
     volumes:
       - ./logs/firecrest:/var/log:delegated
-      - ../test-build/environment/keys/user-key:/user-key:ro
+      - ./keys/user-key:/user-key:ro
       - ./ssl:/ssl
 
+
+  #------- Reservation Microservice ------#
   reservations:
     image: f7t-reservations
     container_name: reservations
@@ -173,9 +188,11 @@ services:
       - 5005:5005
     volumes:
       - ./logs/firecrest:/var/log:delegated
-      - ../test-build/environment/keys/user-key:/user-key:ro
+      - ./keys/user-key:/user-key:ro
       - ./ssl:/ssl
 
+
+  #------- Website -------#
   # web client
   client:
     image: f7t-client
@@ -193,38 +210,9 @@ services:
       - ./demo_client/config.py:/app/config.py:ro
       - ./demo_client/client_secrets.json:/app/client_secrets.json:ro
       - ./logs/client:/var/log:delegated
+      
 
-  # dummy cluster
-  cluster:
-    image: f7t-cluster
-    container_name: cluster
-    build:
-      context: ../test-build
-      dockerfile: ./cluster/Dockerfile
-      network: host
-    networks:
-      firecrest-internal:
-        ipv4_address: 192.168.220.12
-    hostname: cluster
-    volumes:
-      - ./logs/cluster/:/var/log/slurm/:delegated
-
-  # complementary 3rd party services
-  keycloak:
-    image: "quay.io/keycloak/keycloak:18.0.2"
-    container_name: fckeycloak
-    env_file: keycloak/keycloak.env
-    command: start-dev  --http-relative-path /auth --import-realm
-
-    networks:
-      firecrest-internal:
-        ipv4_address: 192.168.220.20
-    ports:
-      - "${KEYCLOAK_PORT:-8080}:8080"
-    volumes:
-      - ./keycloak/config.json:/opt/keycloak/data/import/config.json:ro
-      - ./logs/keycloak:/opt/jboss/keycloak/standalone/log/:delegated
-
+  #-------- complementary 3rd party services  
   kong:
     image: kong:2.5.0
     container_name: kong
