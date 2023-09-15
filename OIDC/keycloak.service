@@ -1,0 +1,43 @@
+#This configuration file is to make the keycloak be able to run at system startup or restart on failure automatically.
+#Append this to systemd/system if using on ubuntu.
+#Reload the daemon
+#Enable the keycloak service
+#Start the keycloak service
+#Check the keycloak service
+
+
+#------------------------------ 
+#For Keycloak to run at startup
+#------------------------------
+
+[Unit]
+Description=Keycloak Service that will run at boot
+After=syslog.target network.target
+Before=httpd.service
+
+
+[Service]
+
+EnvironmentFile=/home/coare/keycloak/keycloak-21.1.1/conf/keycloak.conf
+
+Type=simple
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=0
+
+# SIGTERM signal is used to stop the Java process
+KillSignal=SIGTERM
+# Send the signal only to the JVM rather than its control group
+KillMode=process
+# Java process is never killed
+SendSIGKILL=no
+# When a JVM receives a SIGTERM signal it exits with code 143 and this will stop the auto-restart
+SuccessExitStatus=143
+
+#Execute the script to start the keycloak
+ExecStart=/home/coare/keycloak/keycloak-21.1.1/bin/kc.sh start
+
+
+[Install]
+WantedBy=multi-user.target
+
