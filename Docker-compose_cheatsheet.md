@@ -1,6 +1,6 @@
 ---
 Title: Docker Compose Cheatsheet
-subtitle: Quick reference for Docker Compose commands and config files
+Subtitle: Quick reference for Docker Compose commands and config files
 Author: Komraad
 ---
 
