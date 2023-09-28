@@ -2,7 +2,7 @@
 {
     "systems": {
             "cluster": {
-                "users": ["test1", "qcs", "coare", "cy.fontelo", "service-account-firecrest-sample"] 
+                "users": ["test1", "qcs", "coare", "cy.fontelo", "service-account-firecrest-sample", "cy.fontelo-test", "bernard.ramos"] 
             },
             "not_a_system": {
                 "users": ["testuser"]
