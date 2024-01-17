@@ -1,6 +1,21 @@
-# Keycloak
-Keycloak is an open source software (OSS) that allows single sign-on with Identity and Access Management (IAM) aimed at modern applications and services. Single sign-on (SSO) is an authentication scheme that allows a user to log in with single ID to any several independent services and software systems without re-entering authentication factors. Keycloak supports three types of protocol which includes OpenID Connect, OAuth 2.0, and SAML 2.0.
+# Keycloak Systemd Service Configuration
 
-This will be the configuration for the keycloak. 
-IP's and other settings should be change according to your setup and needs.
+This README file provides instructions on how to configure Keycloak to run automatically at system startup or restart on failure using systemd on Ubuntu.
+
+## Prerequisites
+
+Before you begin, ensure you have the following prerequisites:
+
+- Keycloak server installed and configured.
+- A user with sudo privileges.
+
+## Step 1: Create the Systemd Service File
+
+1. Open a terminal window and navigate to the `/etc/systemd/system` directory.
+2. Create a new service file named `keycloak.service` using your preferred text editor (e.g., `sudo nano keycloak.service`).
+3. Copy and paste the following configuration into the `keycloak.service` file:
+
+
+This will be the configuration for the keycloak. <br>
+IP's and other settings should be change according to your setup and needs. <br>
 For more details about the keycloak server setup kindly check the official website: https://www.keycloak.org/guides#server
