@@ -1,9 +1,3 @@
-#
-#  Copyright (c) 2019-2023, ETH Zurich. All rights reserved.
-#
-#  Please, refer to the LICENSE file in the root directory.
-#  SPDX-License-Identifier: BSD-3-Clause
-#
 class Config:
     '''Base configuration class for the Flask app'''
 
