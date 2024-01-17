@@ -13,9 +13,10 @@ Before you begin, ensure you have the following prerequisites:
 
 1. Open a terminal window and navigate to the `/etc/systemd/system` directory.
 2. Create a new service file named `keycloak.service` using your preferred text editor (e.g., `sudo nano keycloak.service`).
-3. Copy and paste the following configuration into the `keycloak.service` file:
+3. Open the file `keycloak.service`
+4. Copy and paste the following configuration into the `keycloak.service` file.
 
 
-This will be the configuration for the keycloak. <br>
-IP's and other settings should be change according to your setup and needs. <br>
+> [!NOTE]
+IP Address and other settings should be change according to your setup and needs. <br>
 For more details about the keycloak server setup kindly check the official website: https://www.keycloak.org/guides#server
