@@ -18,5 +18,5 @@ Before you begin, ensure you have the following prerequisites:
 
 
 > [!NOTE]
-IP Address and other settings should be change according to your setup and needs. <br>
+`IP Address` and other settings should be change according to your setup and needs. <br>
 For more details about the keycloak server setup kindly check the official website: https://www.keycloak.org/guides#server
