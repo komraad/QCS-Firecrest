@@ -2,9 +2,7 @@
 
 This Nginx configuration file sets up an HTTP server and an HTTPS server with reverse proxy capabilities.
 
-## HTTP Server Configuration
-
-The HTTP server is configured to listen on port 80 and redirect all incoming HTTP requests to HTTPS using a 301 redirect. Here's the relevant code:
+**HTTP Server Configuration**
 
 ```nginx
 server {
@@ -16,8 +14,10 @@ server {
 }
 ```
 
-## HTTPS Server Configuration
-**HTTPS Block:**
+- The HTTP block listens on port 80 (and its IPv6 equivalent) and serves as the default server.
+- The `return 301` directive is used to redirect all HTTP requests to their HTTPS counterparts. This ensures that all traffic is encrypted and secure.
+
+**HTTPS Server Configuration:**
 
 The HTTPS server is configured to listen on port 443 and uses SSL for secure communication. Here's the relevant code:
 
