@@ -17,6 +17,7 @@ server {
 ```
 
 ## HTTPS Server Configuration
+**HTTPS Block:**
 
 The HTTPS server is configured to listen on port 443 and uses SSL for secure communication. Here's the relevant code:
 
