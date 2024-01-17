@@ -34,8 +34,15 @@ SendSIGKILL=no
 # When a JVM receives a SIGTERM signal it exits with code 143 and this will stop the auto-restart
 SuccessExitStatus=143
 
-#Execute the script to start the keycloak
-ExecStart=/home/coare/keycloak/keycloak-21.1.1/bin/kc.sh start
+########################################################################
+# Select which mode to start the keycloak, production mode or dev-mode #
+########################################################################
+
+# Start the keycloak in production mode
+#ExecStart=/home/coare/keycloak/keycloak-21.1.1/bin/kc.sh start
+
+# Start the keycloak in dev-mode (developer mode)
+ExecStart=/home/coare/keycloak/keycloak-21.1.1/bin/kc.sh start-dev --http-relative-path /auth --log-level=info --log=console,file --log-file=/home/coare/QCS/QCS-Firecrest/deploy/asti-qcs/logs/keycloak/keycloak.log
 
 
 [Install]
