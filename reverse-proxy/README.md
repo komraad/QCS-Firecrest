@@ -1,6 +1,11 @@
+# Reverse Proxy Configuration
+
+The reverse proxy configuration routes incoming requests to different backend servers based on the request path.
+
+
 # Nginx Configuration for HTTP and HTTPS with Reverse Proxy
 
-This Nginx configuration file sets up an HTTP server and an HTTPS server with reverse proxy capabilities. It includes detailed explanations and code snippets to help a junior developer understand the configuration.
+This Nginx configuration file sets up an HTTP server and an HTTPS server with reverse proxy capabilities.
 
 ## HTTP Server Configuration
 
@@ -16,10 +21,26 @@ server {
 }
 ```
 
+## HTTPS Server Configuration
 
-## Reverse Proxy Configuration
+The HTTPS server is configured to listen on port 443 and uses SSL for secure communication. Here's the relevant code:
 
-The reverse proxy configuration routes incoming requests to different backend servers based on the request path.
+```nginx
+server {
+    listen 443 ssl http2 default_server;
+    listen [::]:443 ssl http2 default_server;
+    server_name ____;
+
+    ssl_certificate "/path-to-your-certificate/";
+    ssl_certificate_key "/path-to-your-certificate-key/";
+
+    ssl_session_cache shared:SSL:1m;
+    ssl_session_timeout 10m;
+    ssl_protocols TLSv1.2 TLSv1.3;
+}
+```
+
+
 
 # Setting
 - Redirect HTTP to HTTPS
